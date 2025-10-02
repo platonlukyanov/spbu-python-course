@@ -15,7 +15,7 @@ class Vector:
 
     values: Iterable[int | float] = []
 
-    def __init__(self, *values: Iterable[int | float]):
+    def __init__(self, *values: int | float):
         self.values = values
 
     def __mul__(self, other) -> int | float:
@@ -62,7 +62,7 @@ class Matrix:
 
     values: Iterable[Iterable[int | float]] = []
 
-    def __init__(self, *values: Iterable[Iterable[int | float]]):
+    def __init__(self, *values: Iterable[int | float]):
         self.values = values
 
     def __add__(self, other):
