@@ -1,5 +1,6 @@
-from typing import Iterable
+from typing import Iterable, Sized
 import math
+from __future__ import annotations
 
 
 class Vector:
@@ -16,11 +17,12 @@ class Vector:
     values: Iterable[int | float] = []
 
     def __init__(self, *values: int | float):
+        """Initializes a vector with the given values"""
         self.values = values
 
-    def __mul__(self, other) -> int | float:
+    def __mul__(self, other: Vector) -> int | float:
         """Calculates the scalar product of two vectors"""
-        scalar_product = 0
+        scalar_product: float | int = 0
 
         for x, y in zip(self.values, other.values):
             scalar_product += x * y
@@ -35,7 +37,7 @@ class Vector:
 
         return math.sqrt(sum_of_squares)
 
-    def angle(self, other):
+    def angle(self, other: Vector) -> float:
         """Calculates the angle between two vectors. Returns an angle in degrees"""
         dot_product = self * other
         length_product = self.length() * other.length()
@@ -60,29 +62,32 @@ class Matrix:
     >>> mat1.transpose() # returns Matrix([[1, 4, 7], [2, 5, 8], [3, 6, 9]])
     """
 
-    values: Iterable[Iterable[int | float]] = []
+    values: list[list[int | float]] = []
 
-    def __init__(self, *values: Iterable[int | float]):
-        self.values = values
+    def __init__(self, *values: list[int | float]):
+        """Initializes a matrix with the given values"""
+        self.values = list(values)
 
-    def __add__(self, other):
+    def __add__(self, other: Matrix):
         """Adds two matrices"""
         if len(self.values) != len(other.values):
             raise ValueError("Matrices must have the same dimensions")
 
-        result = []
+        result: list[list[int | float]] = []
+
         for i in range(len(self.values)):
             result.append([])
             for j in range(len(self.values[0])):
                 result[i].append(self.values[i][j] + other.values[i][j])
         return Matrix(*result)
 
-    def __mul__(self, other):
+    def __mul__(self, other: Matrix):
         """Multiplies two matrices"""
         if len(self.values[0]) != len(other.values):
             raise ValueError("Matrices must have the same dimensions")
 
-        result = []
+        result: list[list[int | float]] = []
+
         for i in range(len(self.values)):
             result.append([])
             for j in range(len(other.values[0])):
@@ -103,8 +108,11 @@ class Matrix:
                 result[i].append(self.values[j][i])
         return Matrix(*result)
 
-    def __eq__(self, other):
+    def __eq__(self, other: object) -> bool:
         """Checks if two matrices are equal"""
+        if not isinstance(other, Matrix):
+            raise NotImplementedError("Can only compare matrices with other matrices")
+
         if len(self.values) != len(other.values):
             return False
         for i in range(len(self.values)):
