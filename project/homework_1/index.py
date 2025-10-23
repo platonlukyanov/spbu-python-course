@@ -1,6 +1,6 @@
+from __future__ import annotations
 from typing import Iterable, Sized
 import math
-from __future__ import annotations
 
 
 class Vector:
