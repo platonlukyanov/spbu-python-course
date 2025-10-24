@@ -5,9 +5,9 @@ from enum import Enum, auto
 import random
 import time
 
-from card_game_basics import Card, Deck
-from exceptions import SplitError
-from utils import calculate_ace_blackjack_value, pretty_print
+from .card_game_basics import Card, Deck
+from .exceptions import SplitError
+from .utils import calculate_ace_blackjack_value, pretty_print
 
 
 class BlackJackCard:
@@ -98,7 +98,7 @@ class BlackJackHand:
         """Returns the bet count of the hand"""
         return self.bet_count
 
-    def split(self, card: BlackJackCard) -> Tuple[BlackJackHand, BlackJackHand]:
+    def split(self) -> Tuple[BlackJackHand, BlackJackHand]:
         """Splits the hand into two if possible"""
         if (
             len(self._cards) != 2
@@ -123,9 +123,10 @@ class Player:
 
         self._hands[hand_index].add_card(card)
 
-    def split(self, hand_index: int = 0):
+    def split(self, card: BlackJackCard, hand_index: int = 0):
         """Splits the player's hand"""
-        hand1, hand2 = self._hands[hand_index].split(self._hands[hand_index]._cards[0])
+        self._hands[hand_index].add_card(card)
+        hand1, hand2 = self._hands[hand_index].split()
         self._hands[hand_index] = hand1
         self._hands.append(hand2)
 
@@ -200,7 +201,7 @@ class Bot(BlackJackActor):
         """Makes a decision for the bot"""
         hand_index = random.randint(0, len(self._player.get_hands()) - 1)
         hand = self._player.get_hands()[hand_index]
-        time.sleep(random.randint(1, 3))
+        # time.sleep(random.randint(1, 3))
 
         if self._player.is_disabled():
             return (hand_index, BlackJackDecision.STAND)
@@ -211,15 +212,15 @@ class Bot(BlackJackActor):
         if any(hand.get_sum() == 21 for hand in self._player.get_hands()):
             return (hand_index, BlackJackDecision.STAND)
 
-        variants = [
+        strategies = [
             BlackJackDecision.STAND,
             BlackJackDecision.SURRENDER,
             BlackJackDecision.HIT,
             BlackJackDecision.DOUBLE_DOWN,
         ]
-        random.shuffle(variants)
+        random.shuffle(strategies)
 
-        return (hand_index, variants[0])
+        return (hand_index, strategies[0])
 
     def get_player(self) -> Player:
         """Returns the player of the actor"""
@@ -387,3 +388,7 @@ class Game:
     def status(self):
         """Returns the status of the game"""
         return self._status
+
+    def get_actors(self):
+        """Returns the actors of the game"""
+        return self._actors

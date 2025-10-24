@@ -1,4 +1,4 @@
-from card_game_basics import Card
+from .card_game_basics import Card
 
 
 def pretty_print(card: Card):
