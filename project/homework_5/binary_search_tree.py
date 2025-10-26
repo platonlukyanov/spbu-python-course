@@ -1,6 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from typing import Generic, Literal, Optional, TypeVar, Protocol
+from typing import Generic, Iterator, Literal, Optional, TypeVar, Protocol
 
 
 class Comparable(Protocol):
@@ -109,6 +109,17 @@ class BinarySearchTree(Generic[T, U]):
 
         return self.min(node.left)
 
+    def max(self, root: Node[T, U] | None | Literal["root"] = "root") -> Node[T, U]:
+        """Returns the maximum node in the binary search tree"""
+        node: Node[T, U] | None = self.root if root == "root" else root
+        if node is None:
+            raise ValueError("Tree is empty")
+
+        if node.right == None:
+            return node
+
+        return self.max(node.right)
+
     def delete(
         self, key: T, root: Node[T, U] | None | Literal["root"] = "root"
     ) -> Node[T, U] | None:
@@ -134,3 +145,35 @@ class BinarySearchTree(Generic[T, U]):
                 node = None
 
         return node
+
+    def forward_iterator(
+        self, root: Node[T, U] | None | Literal["root"] = "root"
+    ) -> Iterator[Node[T, U]]:
+        """Returns an iterator that traverses the tree in a forward direction"""
+        node: Node[T, U] | None = self.root if root == "root" else root
+        if node is not None:
+            yield node
+            while node.left is not None:
+                node = node.left
+                yield node
+            while node.right is not None:
+                node = node.right
+                yield node
+
+    def backward_iterator(self) -> Iterator[Node[T, U]]:
+        """Returns an iterator that traverses the tree in a backward direction"""
+        nodes = []
+        for node in self.forward_iterator():
+            nodes.append(node)
+
+        for node in nodes[::-1]:
+            yield node
+
+    def __eq__(self, value: object) -> bool:
+        if not isinstance(value, BinarySearchTree):
+            return False
+
+        return self.root == value.root
+
+    def __iter__(self) -> Iterator[Node[T, U]]:
+        return self.forward_iterator()
