@@ -104,3 +104,17 @@ def test_inequality():
     bst2.insert(5, 5)
 
     assert bst1 != bst2
+
+
+def test_delete_all_nodes():
+    bst = BinarySearchTree()
+    bst.insert(1, 1)
+    bst.insert(2, 2)
+    bst.insert(3, 3)
+    bst.insert(4, 4)
+    bst.delete(2)
+    bst.delete(3)
+    bst.delete(1)
+    assert bst.search(1) is None
+    assert bst.search(3) is None
+    assert bst.search(2) is None

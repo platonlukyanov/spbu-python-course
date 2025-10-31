@@ -135,3 +135,33 @@ def test_len_in_hashtable():
     table[2] = 6
     table[3] = 7
     assert len(table) == 3
+
+
+def test_string_in_hashtable_keys():
+    table = HashTable()
+    table[1] = 5
+    table["2"] = 6
+    table[3] = 7
+    assert 1 in table
+    assert "2" in table
+    assert 3 in table
+
+
+def test_tuple_in_hashtable_keys():
+    table = HashTable()
+    table[1] = 5
+    table[(2, 3)] = 6
+    table[3] = 7
+    assert 1 in table
+    assert (2, 3) in table
+    assert 3 in table
+
+
+def test_clear_hashtable():
+    table = HashTable()
+    table[1] = 5
+    table[2] = 6
+    table[3] = 7
+    table.clear()
+    assert list(table.keys()) == []
+    assert list(table.values()) == []
