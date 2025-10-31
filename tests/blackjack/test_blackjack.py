@@ -52,6 +52,15 @@ def test_blackjack_hand_add_card():
     assert hand.get_sum() == 21
 
 
+def test_blackjack_hand_with_aces():
+    hand = BlackJackHand([])
+    hand.add_card(BlackJackCard(Card("♥", "5")))
+    hand.add_card(BlackJackCard(Card("♦", "5")))
+    hand.add_card(BlackJackCard(Card("♥", "A")))
+    hand.add_card(BlackJackCard(Card("♦", "A")))
+    assert hand.get_sum() == 12
+
+
 def test_blackjack_hand_give_up_half_of_bet():
     hand = BlackJackHand([BlackJackCard(Card("♥", "A")), BlackJackCard(Card("♥", "K"))])
     hand.add_bet()

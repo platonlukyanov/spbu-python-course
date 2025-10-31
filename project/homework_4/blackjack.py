@@ -73,12 +73,17 @@ class BlackJackHand:
             filter(lambda card: card.get_card_rank() != "A", self._cards)
         )
 
-        for card in cards_not_aces + aces:
-            if card.get_card_rank() == "A":
-                card_sum += calculate_ace_blackjack_value(card_sum)
-                continue
-
+        for card in cards_not_aces:
             card_sum += card.get_value()
+
+        if card_sum + len(aces) * 11 <= 21:
+            card_sum += len(aces) * 11
+        else:
+            for index, card in enumerate(aces):
+                if card_sum + (len(aces) - index) * 11 <= 21:
+                    card_sum += 11
+                else:
+                    card_sum += 1
 
         return card_sum
 
