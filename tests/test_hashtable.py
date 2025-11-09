@@ -1,4 +1,5 @@
 from project.homework_5.hashtable import HashTable
+import multiprocessing
 
 
 def test_hashtable_initialization():
@@ -165,3 +166,81 @@ def test_clear_hashtable():
     table.clear()
     assert list(table.keys()) == []
     assert list(table.values()) == []
+
+
+def deploy_inserts(table, start, end):
+    for i in range(start, end):
+        table[i] = f"value_{i}"
+
+
+def deploy_updates(table, start, end):
+    for i in range(start, end):
+        if i in table:
+            table[i] = f"updated_{i}"
+
+
+def deploy_deletes(table, start, end):
+    for i in range(start, end):
+        try:
+            del table[i]
+        except KeyError:
+            pass
+
+
+def test_concurrent_inserts():
+    table = HashTable()
+    p1 = multiprocessing.Process(target=deploy_inserts, args=(table, 0, 50))
+    p2 = multiprocessing.Process(target=deploy_inserts, args=(table, 50, 100))
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
+
+    for i in range(100):
+        assert table[i] == f"value_{i}"
+
+
+def test_concurrent_updates():
+    initial_data = [(i, f"value_{i}") for i in range(100)]
+    table = HashTable(initial_data)
+    p1 = multiprocessing.Process(target=deploy_updates, args=(table, 0, 50))
+    p2 = multiprocessing.Process(target=deploy_updates, args=(table, 50, 100))
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
+
+    for i in range(100):
+        assert table[i] == f"updated_{i}"
+
+
+def test_concurrent_deletes():
+    initial_data = [(i, f"value_{i}") for i in range(100)]
+    table = HashTable(initial_data)
+    p1 = multiprocessing.Process(target=deploy_deletes, args=(table, 0, 50))
+    p2 = multiprocessing.Process(target=deploy_deletes, args=(table, 50, 100))
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
+    assert len(table) == 0
+
+
+def test_mixed_operations():
+    initial_data = [(i, f"value_{i}") for i in range(100)]
+    table = HashTable(initial_data)
+    p1 = multiprocessing.Process(target=deploy_inserts, args=(table, 100, 150))
+    p2 = multiprocessing.Process(target=deploy_updates, args=(table, 0, 50))
+    p3 = multiprocessing.Process(target=deploy_deletes, args=(table, 50, 100))
+    p1.start()
+    p2.start()
+    p3.start()
+    p1.join()
+    p2.join()
+    p3.join()
+    for i in range(100, 150):
+        assert table[i] == f"value_{i}"
+    for i in range(0, 50):
+        assert table[i] == f"updated_{i}"
+    for i in range(50, 100):
+        assert i not in table
