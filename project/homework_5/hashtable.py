@@ -1,9 +1,23 @@
-from typing import Any, Iterable, Iterator, KeysView, MutableMapping
+from multiprocessing.managers import BaseManager
+from typing import Any, Iterator, MutableMapping
 
 from .binary_search_tree import BinarySearchTree
 from collections import namedtuple
 
+
 KeyValuePair = namedtuple("KeyValuePair", ["key", "value"])
+
+
+class BSTManager(BaseManager):
+    def BinarySearchTree(self) -> BinarySearchTree:
+        return BinarySearchTree()
+
+
+BSTManager.register(
+    "BinarySearchTree",
+    BinarySearchTree,
+    exposed=["insert", "search", "delete", "update", "keys", "forward_list", "equals"],
+)
 
 
 class HashTable(MutableMapping):
@@ -29,9 +43,9 @@ class HashTable(MutableMapping):
 
         The initial elements will be inserted into the hash table.
         """
-        self.bst: BinarySearchTree[int, KeyValuePair] = BinarySearchTree()
-
-        self.size = len(initial_elements)
+        self.manager = BSTManager()
+        self.manager.start()
+        self.bst: BinarySearchTree[int, KeyValuePair] = self.manager.BinarySearchTree()
 
         for key, value in initial_elements:
             self[key] = value
@@ -72,7 +86,6 @@ class HashTable(MutableMapping):
             self.bst.update(hash(key), KeyValuePair(key, value))
         else:
             self.bst.insert(hash(key), KeyValuePair(key, value))
-            self.size += 1
 
     def __delitem__(self, key: Any):
         """
@@ -87,8 +100,8 @@ class HashTable(MutableMapping):
         Example:
             >>> del table['example']
         """
+
         self.bst.delete(hash(key))
-        self.size -= 1
 
     def __iter__(self) -> Iterator[KeyValuePair]:
         """
@@ -97,7 +110,7 @@ class HashTable(MutableMapping):
         Yields:
             Iterator[KeyValuePair]: KeyValuePair objects of entries in the table.
         """
-        for element in self.bst.forward_iterator():
+        for element in self.bst.forward_list():
             yield element.value
 
     def __len__(self) -> int:
@@ -107,7 +120,7 @@ class HashTable(MutableMapping):
         Returns:
             int: Count of elements.
         """
-        return self.size
+        return len(self.bst.forward_list())
 
     def __contains__(self, key: Any) -> bool:
         """
@@ -134,7 +147,7 @@ class HashTable(MutableMapping):
         if not isinstance(other, HashTable):
             return False
 
-        return self.bst == other.bst
+        return self.bst.forward_list() == other.bst.forward_list()
 
     def keys(self):
         """
@@ -143,7 +156,7 @@ class HashTable(MutableMapping):
         Yields:
             Iterator[Any]: Keys stored in the hash table.
         """
-        for key_value_pair in self.bst:
+        for key_value_pair in self.bst.forward_list():
             yield key_value_pair.value.key
 
     def values(self):
@@ -153,7 +166,7 @@ class HashTable(MutableMapping):
         Yields:
             Iterator[Any]: Values stored in the hash table.
         """
-        for key_value_pair in self.bst:
+        for key_value_pair in self.bst.forward_list():
             yield key_value_pair.value.value
 
     def items(self):
@@ -163,7 +176,7 @@ class HashTable(MutableMapping):
         Yields:
             Iterator[tuple[Any, Any]]: Key-value pairs stored in the hash table.
         """
-        for key_value_pair in self.bst:
+        for key_value_pair in self.bst.forward_list():
             yield (key_value_pair.value.key, key_value_pair.value.value)
 
     def clear(self):
@@ -173,3 +186,6 @@ class HashTable(MutableMapping):
         """
         for key in self.keys():
             del self[key]
+
+    def __del__(self):
+        self.manager.shutdown()

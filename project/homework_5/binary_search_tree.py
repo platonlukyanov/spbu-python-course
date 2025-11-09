@@ -31,7 +31,6 @@ class Node(Generic[T, U]):
     value: U
     left: Optional[Node] = None
     right: Optional[Node] = None
-    parent: Optional[Node] = None
 
     def __str__(self):
         """Returns a string representation of the node"""
@@ -231,6 +230,16 @@ class BinarySearchTree(Generic[T, U]):
                 node = node.right
                 yield node
 
+    def forward_list(self) -> list[Node[T, U]]:
+        """
+        Returns a list that traverses the tree in forward order (pre-order traversal).
+
+        Returns:
+            list[Node[T, U]]: Nodes in forward traversal order.
+
+        """
+        return list(self.forward_iterator())
+
     def backward_iterator(self) -> Iterator[Node[T, U]]:
         """
         Returns an iterator that traverses the tree in backward order (reverse of forward iterator).
@@ -248,6 +257,21 @@ class BinarySearchTree(Generic[T, U]):
     def __eq__(self, value: object) -> bool:
         """
         Compares this binary search tree with another for equality.
+
+        Args:
+            value (object): Another object to compare with.
+
+        Returns:
+            bool: True if both trees have the same structure and node keys/values, False otherwise.
+        """
+        if not isinstance(value, BinarySearchTree):
+            return False
+
+        return self.root == value.root
+
+    def equals(self, value: object) -> bool:
+        """
+        Compares this binary search tree with another for equality. (mirror of __eq__)
 
         Args:
             value (object): Another object to compare with.
