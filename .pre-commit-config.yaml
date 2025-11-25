@@ -3,10 +3,15 @@ repos:
     rev: v3.4.0
     hooks:
       - id: check-yaml
+        exclude: \.md$
       - id: end-of-file-fixer
+        exclude: \.md$
       - id: trailing-whitespace
+        exclude: \.md$
       - id: requirements-txt-fixer
+        exclude: \.md$
   - repo: https://github.com/psf/black
     rev: 22.3.0
     hooks:
       - id: black
+        exclude: \.md$
