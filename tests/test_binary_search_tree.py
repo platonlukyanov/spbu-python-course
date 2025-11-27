@@ -88,6 +88,7 @@ def test_equality():
     bst2.insert(4, 4)
 
     assert bst1 == bst2
+    assert bst1.equals(bst2)
 
 
 def test_inequality():

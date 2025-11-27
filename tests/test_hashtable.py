@@ -1,4 +1,6 @@
+import time
 from project.homework_5.hashtable import HashTable
+import multiprocessing
 
 
 def test_hashtable_initialization():
@@ -165,3 +167,144 @@ def test_clear_hashtable():
     table.clear()
     assert list(table.keys()) == []
     assert list(table.values()) == []
+
+
+def deploy_inserts(table, start, end, increment=0):
+    for i in range(start, end):
+        table[i] = f"value_{i + increment}"
+
+
+def deploy_updates(table, start, end):
+    for i in range(start, end):
+        if i in table:
+            table[i] = f"updated_{i}"
+
+
+def deploy_deletes(table, start, end):
+    for i in range(start, end):
+        try:
+            del table[i]
+        except KeyError:
+            pass
+
+
+def deploy_inserts_with_delay(table, start, end, delay=0.01):
+    for i in range(start, end):
+        table[i] = f"value_{i}"
+        time.sleep(delay)
+
+
+def test_concurrent_inserts():
+    table = HashTable()
+    p1 = multiprocessing.Process(target=deploy_inserts, args=(table, 0, 50))
+    p2 = multiprocessing.Process(target=deploy_inserts, args=(table, 50, 100))
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
+
+    for i in range(100):
+        assert table[i] == f"value_{i}"
+
+
+def test_concurrent_updates():
+    initial_data = [(i, f"value_{i}") for i in range(100)]
+    table = HashTable(initial_data)
+    p1 = multiprocessing.Process(target=deploy_updates, args=(table, 0, 50))
+    p2 = multiprocessing.Process(target=deploy_updates, args=(table, 50, 100))
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
+
+    for i in range(100):
+        assert table[i] == f"updated_{i}"
+
+
+def test_concurrent_deletes():
+    initial_data = [(i, f"value_{i}") for i in range(100)]
+    table = HashTable(initial_data)
+    p1 = multiprocessing.Process(target=deploy_deletes, args=(table, 0, 50))
+    p2 = multiprocessing.Process(target=deploy_deletes, args=(table, 50, 100))
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
+    assert len(table) == 0
+
+
+def test_mixed_operations():
+    initial_data = [(i, f"value_{i}") for i in range(100)]
+    table = HashTable(initial_data)
+    p1 = multiprocessing.Process(target=deploy_inserts, args=(table, 100, 150))
+    p2 = multiprocessing.Process(target=deploy_updates, args=(table, 0, 50))
+    p3 = multiprocessing.Process(target=deploy_deletes, args=(table, 50, 100))
+    p1.start()
+    p2.start()
+    p3.start()
+    p1.join()
+    p2.join()
+    p3.join()
+    for i in range(100, 150):
+        assert table[i] == f"value_{i}"
+    for i in range(0, 50):
+        assert table[i] == f"updated_{i}"
+    for i in range(50, 100):
+        assert i not in table
+
+
+def test_inserts_with_sane_start_and_end():
+    table = HashTable()
+    p1 = multiprocessing.Process(target=deploy_inserts, args=(table, 0, 50, 1))
+    p2 = multiprocessing.Process(target=deploy_inserts, args=(table, 0, 100, 2))
+    p3 = multiprocessing.Process(target=deploy_inserts, args=(table, 0, 150, 3))
+    p4 = multiprocessing.Process(target=deploy_inserts, args=(table, 0, 200, 4))
+    p5 = multiprocessing.Process(target=deploy_inserts, args=(table, 0, 250))
+
+    p1.start()
+    p1.join()
+    p2.start()
+    p2.join()
+    p3.start()
+    p3.join()
+    p4.start()
+    p4.join()
+    p5.start()
+    p5.join()
+
+    for i in range(100):
+        assert table[i] == f"value_{i}"
+
+
+def test_parallel_inserts_timing():
+    table = HashTable()
+
+    manager = multiprocessing.Manager()
+    timestamps = manager.dict()
+
+    def timed_worker(name, start, end):
+        timestamps[name + "_start"] = time.time()
+        deploy_inserts_with_delay(table, start, end)
+        timestamps[name + "_end"] = time.time()
+
+    p1 = multiprocessing.Process(target=timed_worker, args=("p1", 0, 50))
+    p2 = multiprocessing.Process(target=timed_worker, args=("p2", 50, 100))
+
+    p1.start()
+    p2.start()
+    p1.join()
+    p2.join()
+
+    start_diff = abs(timestamps["p1_start"] - timestamps["p2_start"])
+    assert (
+        start_diff < 0.1
+    ), f"Processes did not start in parallel, start time difference: {start_diff}"
+
+    p1_start, p1_end = timestamps["p1_start"], timestamps["p1_end"]
+    p2_start, p2_end = timestamps["p2_start"], timestamps["p2_end"]
+
+    overlap = min(p1_end, p2_end) - max(p1_start, p2_start)
+    assert overlap > 0, "No overlap detected, processes ran sequentially"
+
+    for i in range(100):
+        assert table[i] == f"value_{i}"
